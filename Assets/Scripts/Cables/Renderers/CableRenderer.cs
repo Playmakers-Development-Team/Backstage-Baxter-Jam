@@ -18,10 +18,9 @@ namespace Cables.Renderers
         public UnityEvent initialised = new UnityEvent();
         public UnityEvent pointsUpdated = new UnityEvent();
         
-        public List<Vector3> Points = new List<Vector3>();
         public CableController Cable => cable;
 
-        protected List<CableSegment> Segments => cableSegmentsController.Segments;
+        public List<CableSegment> Segments => cableSegmentsController.Segments;
         private Sprite cableSprite;
 
         protected virtual void OnEnable()
@@ -43,8 +42,6 @@ namespace Cables.Renderers
 
         protected void UpdateLineRendererInstant(LineRenderer lineRenderer, List<Vector3> points)
         {
-            Points = points;
-            
             lineRenderer.positionCount = points.Count;
             lineRenderer.SetPositions(points.ToArray());
             

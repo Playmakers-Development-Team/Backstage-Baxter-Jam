@@ -6,11 +6,9 @@ namespace Cables
 {
     public class CableCollider : MonoBehaviour
     {
-        // TODO: Generalise to CableRenderer.
-        [SerializeField] private WholeCableRenderer cableRenderer;
+        [SerializeField] private CableRenderer cableRenderer;
         [SerializeField] private EdgeCollider2D edgeCollider;
-        // TODO: Should be segments rather than points.
-        [SerializeField] private int pointsToSkipWhenInProgress;
+        [SerializeField] private int segmentsToSkipWhenInProgress;
 
         private void OnEnable()
         {
@@ -33,23 +31,30 @@ namespace Cables
         {
             var cableInProgress = cableRenderer.Cable.state == CableController.CableState.InProgress;
             
-            var pointsToSkip = cableInProgress ? pointsToSkipWhenInProgress : 0;
+            var segmentsToSkip = cableInProgress ? segmentsToSkipWhenInProgress : 0;
             
-            if (cableRenderer.Points.Count <= pointsToSkip + 1)
+            if (cableRenderer.Segments.Count <= segmentsToSkip + 1)
             {
                 edgeCollider.enabled = false;
 
                 return;
             }
 
-            edgeCollider.enabled = true;
-
-            edgeCollider.SetPoints(cableRenderer.Points
-                .TakeWhile((_, i) => i < cableRenderer.Points.Count - pointsToSkip)
+            var segments = cableRenderer.Segments
+                .TakeWhile((_, i) => i < cableRenderer.Segments.Count - segmentsToSkip);
+            
+            var lastPoint = segments.Last().node.Position;
+            
+            var points = segments
+                .SelectMany(segment => segment.points)
+                .Append(lastPoint)
                 .Select(p => transform.InverseTransformPoint(p))
                 .Select(p => (Vector2)p)
-                .ToList()
-            );
+                .ToList();
+
+            edgeCollider.enabled = true;
+
+            edgeCollider.SetPoints(points);
         }
     }
 }

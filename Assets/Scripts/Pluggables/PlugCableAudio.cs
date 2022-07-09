@@ -59,7 +59,15 @@ namespace Pluggables
             PlayRandomSound(audioDisconnectOff);
         }
 
-        private void PlayRandomSound(AudioClip[] array) {
+        private void PlayRandomSound(AudioClip[] array)
+        {
+            if (array.Length == 0)
+            {
+                Debug.LogWarning("Could not play random sound: No sounds in array.");
+
+                return;
+            }
+            
             int randIndex = Random.Range(0, array.Length - 1);
             
             AudioClip randClip = array[randIndex];
