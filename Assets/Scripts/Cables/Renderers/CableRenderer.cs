@@ -26,15 +26,21 @@ namespace Cables.Renderers
         protected virtual void OnEnable()
         {
             cable.initialised.AddListener(OnInitialised);
+
+            cableSegmentsController.cableSegmentUpdated.AddListener(OnCableSegmentUpdated);
         }
 
         protected virtual void OnDisable()
         {
             cable.initialised.RemoveListener(OnInitialised);
+            
+            cableSegmentsController.cableSegmentUpdated.AddListener(OnCableSegmentUpdated);
         }
         
         protected virtual void Update()
         {
+            if (!lerpEnabled) return;
+            
             UpdateLineRenderers();
         }
 
@@ -75,6 +81,13 @@ namespace Cables.Renderers
             cableSprite = cable.Sprite;
             
             initialised.Invoke();
+        }
+
+        private void OnCableSegmentUpdated(CableSegment segment)
+        {
+            if (lerpEnabled) return;
+            
+            UpdateLineRenderers();
         }
 
         protected void InitialiseLineRenderer(LineRenderer lineRenderer)

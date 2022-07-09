@@ -25,9 +25,9 @@ namespace Cables
             get => previousNode;
             set
             {
-                previousNode.nodeMoved.RemoveListener(OnNodeMoved);
+                previousNode?.nodeMoved.RemoveListener(OnNodeMoved);
                 previousNode = value;
-                previousNode.nodeMoved.AddListener(OnNodeMoved);
+                previousNode?.nodeMoved.AddListener(OnNodeMoved);
             }
         }
 
@@ -36,9 +36,9 @@ namespace Cables
             get => node;
             set
             {
-                node.nodeMoved.RemoveListener(OnNodeMoved);
+                node?.nodeMoved.RemoveListener(OnNodeMoved);
                 node = value;
-                node.nodeMoved.AddListener(OnNodeMoved);
+                node?.nodeMoved.AddListener(OnNodeMoved);
             }
         }
 

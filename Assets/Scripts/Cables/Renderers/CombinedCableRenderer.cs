@@ -40,7 +40,6 @@ namespace Cables.Renderers
 
         protected override void UpdateLineRenderers()
         {
-            // TODO: We don't need to do this every frame if we're not lerping
             foreach (var multiSegment in lineRenderers.Keys)
             {
                 UpdateLineRendererLerp(lineRenderers[multiSegment], GetTargetPoints(multiSegment));
