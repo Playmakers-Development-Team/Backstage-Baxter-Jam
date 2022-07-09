@@ -153,26 +153,7 @@ namespace Cables.Renderers
             // TODO: At the moment there's no way to delete a PipeNode, so this hasn't been tested
             if (segment.Node is PipeNode)
             {
-                var multiSegmentIndex = multiSegments.IndexOf(multiSegment);
-                
-                if (multiSegmentIndex < multiSegments.Count - 1)
-                {
-                    var nextMultiSegment = multiSegments[multiSegmentIndex + 1];
-
-                    multiSegment.Segments.AddRange(nextMultiSegment.Segments);
-
-                    // Also need to update all the references in segmentMultiSegments
-                    foreach (var nextMultiSegmentSegment in nextMultiSegment.Segments)
-                    {
-                        segmentMultiSegments[nextMultiSegmentSegment] = multiSegment;
-                    }
-
-                    Destroy(lineRenderers[nextMultiSegment].gameObject);
-
-                    lineRenderers.Remove(nextMultiSegment);
-
-                    multiSegments.Remove(nextMultiSegment);
-                }
+                CombineMultiSegment(multiSegment);
             }
 
             multiSegment.Segments.Remove(segment);
@@ -181,12 +162,35 @@ namespace Cables.Renderers
 
             if (multiSegment.Segments.Count == 0)
             {
-                Destroy(lineRenderers[multiSegment].gameObject);
-
-                lineRenderers.Remove(multiSegment);
-                
-                multiSegments.Remove(multiSegment);
+                DestroyCableMultiSegment(multiSegment);
             }
+        }
+
+        private void CombineMultiSegment(CableMultiSegment multiSegment)
+        {
+            var multiSegmentIndex = multiSegments.IndexOf(multiSegment);
+
+            if (multiSegmentIndex >= multiSegments.Count - 1) return;
+            
+            var nextMultiSegment = multiSegments[multiSegmentIndex + 1];
+
+            foreach (var segment in nextMultiSegment.Segments)
+            {
+                multiSegment.Segments.Add(segment);
+                
+                segmentMultiSegments[segment] = multiSegment;
+            }
+
+            DestroyCableMultiSegment(nextMultiSegment);
+        }
+
+        private void DestroyCableMultiSegment(CableMultiSegment multiSegment)
+        {
+            Destroy(lineRenderers[multiSegment].gameObject);
+
+            lineRenderers.Remove(multiSegment);
+
+            multiSegments.Remove(multiSegment);
         }
 
         private List<Vector3> GetTargetPoints(CableMultiSegment multiSegment)
