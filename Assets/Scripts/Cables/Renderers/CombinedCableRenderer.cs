@@ -60,17 +60,31 @@ namespace Cables.Renderers
         
         private void CreateCableSegmentRenderer(CableSegment segment)
         {
+            var segmentIndex = AddSegmentToMultiSegment(segment);
+
+            var multiSegment = segmentMultiSegments[segment];
+
+            if (segment.Node is PipeNode)
+            {
+                SplitMultiSegment(multiSegment, segmentIndex);
+            }
+
+            UpdateMultiSegmentRenderer(multiSegment);
+        }
+
+        private int AddSegmentToMultiSegment(CableSegment segment)
+        {
             CableMultiSegment multiSegment = null;
             CableSegment nextSegment = null;
-            
-            // TODO: If no multisegments exits create one
+
             if (multiSegments.Count == 0)
             {
+                // If no multisegments exist, create one
                 multiSegment = CreateCableMultiSegment(0);
             }
             else
             {
-                // TODO: Find which multisegment to add the segment to
+                // Find an existing multisegment to add the segment to
                 nextSegment = Segments.Find(s => s.PreviousNode == segment.Node);
 
                 multiSegment = nextSegment == null
@@ -78,36 +92,40 @@ namespace Cables.Renderers
                     : segmentMultiSegments[nextSegment];
             }
 
-            // TODO: Add the segment to that multisegment in the right position
-            var nextSegmentIndex = nextSegment == null ? multiSegment.Segments.Count : multiSegment.Segments.IndexOf(nextSegment);
-            
+            // Add the segment to that multisegment in the right position
+            var nextSegmentIndex =
+                nextSegment == null ? multiSegment.Segments.Count : multiSegment.Segments.IndexOf(nextSegment);
+
             multiSegment.Segments.Insert(nextSegmentIndex, segment);
-            
+
             segmentMultiSegments.Add(segment, multiSegment);
+            
+            return nextSegmentIndex;
+        }
 
-            if (segment.Node is PipeNode)
+        private void SplitMultiSegment(CableMultiSegment multiSegment, int splitAfterIndex)
+        {
+            // Get all the segments following the added segment in the multisegment
+            var segmentsToMove = multiSegment.Segments.Skip(splitAfterIndex + 1).ToList();
+
+            // Create a new multisegment
+            var multiSegmentIndex = multiSegments.IndexOf(multiSegment);
+            var newMultiSegment = CreateCableMultiSegment(multiSegmentIndex + 1);
+
+            foreach (var segmentToMove in segmentsToMove)
             {
-                // TODO: Get all the segments following the added segment in the multisegment
-                var segmentsToMove = multiSegment.Segments.Skip(nextSegmentIndex + 1).ToList();
+                multiSegment.Segments.Remove(segmentToMove);
 
-                // TODO: Create a new multisegment
-                var multiSegmentIndex = multiSegments.IndexOf(multiSegment);
-                var newMultiSegment = CreateCableMultiSegment(multiSegmentIndex + 1);
-
-                // TODO: Remove segments from old multisegment
-                foreach (var segmentToMove in segmentsToMove)
-                {
-                    multiSegment.Segments.Remove(segmentToMove);
-
-                    segmentMultiSegments[segmentToMove] = newMultiSegment;
-                }
-
-                // TODO: Add the segments to the new multisegment
-                newMultiSegment.Segments.InsertRange(0, segmentsToMove);
+                newMultiSegment.Segments.Add(segmentToMove);
                 
-                UpdateLineRendererInstant(lineRenderers[newMultiSegment], GetTargetPoints(newMultiSegment));
+                segmentMultiSegments[segmentToMove] = newMultiSegment;
             }
 
+            UpdateMultiSegmentRenderer(multiSegment);
+        }
+
+        private void UpdateMultiSegmentRenderer(CableMultiSegment multiSegment)
+        {
             UpdateLineRendererInstant(lineRenderers[multiSegment], GetTargetPoints(multiSegment));
         }
 
