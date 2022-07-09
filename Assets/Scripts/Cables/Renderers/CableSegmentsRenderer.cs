@@ -73,7 +73,7 @@ namespace Cables.Renderers
         {
             var points = segment.points;
             
-            points.Add(segment.node.Position);
+            points.Add(segment.Node.Position);
 
             // TODO: ToList needs optimising, runs slow when lots of nodes.
             var points3D = SetZPositions(segment, points).ToList();

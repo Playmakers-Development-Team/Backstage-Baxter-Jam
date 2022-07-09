@@ -38,7 +38,7 @@ namespace Cables.Renderers
                 points.AddRange(SetZPositions(segmentIndex, segmentPoints));
             }
 
-            points.Add(Segments.Last().node.Position);
+            points.Add(Segments.Last().Node.Position);
 
             return points;
         }

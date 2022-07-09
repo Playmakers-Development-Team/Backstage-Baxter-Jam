@@ -43,7 +43,7 @@ namespace Cables
             var segments = cableRenderer.Segments
                 .TakeWhile((_, i) => i < cableRenderer.Segments.Count - segmentsToSkip);
             
-            var lastPoint = segments.Last().node.Position;
+            var lastPoint = segments.Last().Node.Position;
             
             var points = segments
                 .SelectMany(segment => segment.points)

@@ -12,14 +12,14 @@ namespace Cables.Renderers
         [SerializeField] private Transform lineRendererParent;
 
         private readonly List<CableMultiSegment> multiSegments = new List<CableMultiSegment>();
-        private readonly Dictionary<CableMultiSegment, LineRenderer> lineRenderers = new Dictionary<CableMultiSegment, LineRenderer>();
-
+        private readonly Dictionary<CableMultiSegment, LineRenderer> lineRenderers =
+            new Dictionary<CableMultiSegment, LineRenderer>();
         private readonly Dictionary<CableSegment, CableMultiSegment> segmentMultiSegments =
             new Dictionary<CableSegment, CableMultiSegment>();
 
         private class CableMultiSegment
         {
-            public List<CableSegment> Segments = new List<CableSegment>();
+            public readonly List<CableSegment> Segments = new List<CableSegment>();
         }
         
         #region CableRenderer
@@ -72,7 +72,7 @@ namespace Cables.Renderers
             else
             {
                 // TODO: Find which multisegment to add the segment to
-                nextSegment = Segments.Find(s => s.previousNode == segment.node);
+                nextSegment = Segments.Find(s => s.PreviousNode == segment.Node);
 
                 multiSegment = nextSegment == null
                     ? multiSegments.Last()
@@ -86,7 +86,7 @@ namespace Cables.Renderers
             
             segmentMultiSegments.Add(segment, multiSegment);
 
-            if (segment.node is PipeNode)
+            if (segment.Node is PipeNode)
             {
                 // TODO: Get all the segments following the added segment in the multisegment
                 var segmentsToMove = multiSegment.Segments.Skip(nextSegmentIndex + 1).ToList();
@@ -134,7 +134,7 @@ namespace Cables.Renderers
             var multiSegment = segmentMultiSegments[segment];
 
             // TODO: At the moment there's no way to delete a PipeNode, so this hasn't been tested
-            if (segment.node is PipeNode)
+            if (segment.Node is PipeNode)
             {
                 var multiSegmentIndex = multiSegments.IndexOf(multiSegment);
                 
@@ -181,7 +181,7 @@ namespace Cables.Renderers
                 points.AddRange(segment.points);
             }
             
-            points.Add(multiSegment.Segments.Last().node.Position);
+            points.Add(multiSegment.Segments.Last().Node.Position);
 
             // TODO: ToList needs optimising, runs slow when lots of nodes.
             var points3D = SetZPositions(multiSegment, points).ToList();

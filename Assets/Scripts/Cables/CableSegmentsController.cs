@@ -44,18 +44,12 @@ namespace Cables
     
             // TODO: Unlisten
             cable.nodeCreated.AddListener(OnNodeCreated);
-            cable.nodeMoved.AddListener(OnNodeMoved);
             cable.nodeDestroyed.AddListener(OnNodeDestroyed);
         }
     
         private void OnNodeCreated(CableNode node)
         {
             CreateCableSegment(node);
-        }
-    
-        private void OnNodeMoved(CableNode node)
-        {
-            UpdateCableSegment(node);
         }
 
         private void OnNodeDestroyed(CableNode node)
@@ -69,11 +63,8 @@ namespace Cables
 
             if (nodeIndex < 1) return;
 
-            var segment = new CableSegment();
+            var segment = new CableSegment(node, cable.nodes[nodeIndex - 1]);
 
-            segment.previousNode = cable.nodes[nodeIndex - 1];
-            segment.node = node;
-            
             // TODO: Turn this into a class or scriptable object
             segment.pointsBetweenNodes = pointsBetweenNodes;
             segment.startCurveFunctionID = startCurveFunctionID;
@@ -83,6 +74,8 @@ namespace Cables
             segment.hangUnsupportedCables = hangUnsupportedCables;
 
             segment.GeneratePoints();
+            
+            segment.moved.AddListener(OnSegmentMoved);
             
             Segments.Insert(nodeIndex - 1, segment);
             nodeSegments.Add(node, segment);
@@ -100,25 +93,12 @@ namespace Cables
             {
                 var nextSegment = Segments[segmentIndex + 1];
 
-                nextSegment.previousNode = node;
-
-                UpdateCableSegment(nextSegment);
+                nextSegment.PreviousNode = node;
             }
         }
 
-        private void UpdateCableSegment(CableNode node)
+        private void OnSegmentMoved(CableSegment segment)
         {
-            var segment = nodeSegments[node];
-
-            if (segment == null) return;
-            
-            UpdateCableSegment(segment);
-        }
-
-        private void UpdateCableSegment(CableSegment segment)
-        {
-            segment.GeneratePoints();
-            
             cableSegmentUpdated.Invoke(segment);
         }
 
@@ -126,7 +106,7 @@ namespace Cables
         {
             var segment = nodeSegments[node];
             
-            SetPreviousNodeOfNextSegment(segment, segment.previousNode);
+            SetPreviousNodeOfNextSegment(segment, segment.PreviousNode);
 
             Segments.Remove(segment);
             nodeSegments.Remove(node);

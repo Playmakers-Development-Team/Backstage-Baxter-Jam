@@ -4,6 +4,7 @@ using System.Linq;
 using Cables.Pipes;
 using Cables.Platforms;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Cables
 {
@@ -16,11 +17,40 @@ namespace Cables
         public AnimationCurve curveInterpolation;
         public float catenaryLength;
         public bool hangUnsupportedCables;
-    
-        public CableNode previousNode;
-        public CableNode node;
+
+        public UnityEvent<CableSegment> moved = new UnityEvent<CableSegment>();
+
+        public CableNode PreviousNode
+        {
+            get => previousNode;
+            set
+            {
+                previousNode.nodeMoved.RemoveListener(OnNodeMoved);
+                previousNode = value;
+                previousNode.nodeMoved.AddListener(OnNodeMoved);
+            }
+        }
+
+        public CableNode Node
+        {
+            get => node;
+            set
+            {
+                node.nodeMoved.RemoveListener(OnNodeMoved);
+                node = value;
+                node.nodeMoved.AddListener(OnNodeMoved);
+            }
+        }
 
         public List<Vector2> points = new List<Vector2>();
+        private CableNode previousNode;
+        private CableNode node;
+
+        public CableSegment(CableNode node, CableNode previousNode)
+        {
+            Node = node;
+            PreviousNode = previousNode;
+        }
 
         public void GeneratePoints()
         {
@@ -30,16 +60,16 @@ namespace Cables
             {
                 if (TestForSin())
                 {
-                    points.AddRange(PointsBetweenPositions(previousNode, node, CurveFunctions.CurveFunction.Sine, 20));
+                    points.AddRange(PointsBetweenPositions(PreviousNode, Node, CurveFunctions.CurveFunction.Sine, 20));
                 }
                 else
                 {
-                    points.AddRange(PointsBetweenPositions(previousNode, node));
+                    points.AddRange(PointsBetweenPositions(PreviousNode, Node));
                 }
             }
             else
             {
-                var pointsBetweenPositions = PointsBetweenPositions(previousNode, node, CurveFunctions.CurveFunction.Catenary, 20);
+                var pointsBetweenPositions = PointsBetweenPositions(PreviousNode, Node, CurveFunctions.CurveFunction.Catenary, 20);
             
                 // Duplicate points to prevent tearing
                 // TODO: Need to find another way to check this without nodeIndex. Maybe node type terminal? Or just bring index in here.
@@ -55,8 +85,8 @@ namespace Cables
 
         private bool TestForSin()
         {
-            var previousXYNode = previousNode as PipeNode;
-            var xyNode = node as PipeNode;
+            var previousXYNode = PreviousNode as PipeNode;
+            var xyNode = Node as PipeNode;
             
             if (previousXYNode is null || xyNode is null) return false;
             // if (previousXYNode.Normal != xyNode.Normal * -1) return false;
@@ -67,8 +97,8 @@ namespace Cables
 
         private bool SegmentIsSupported()
         {
-            var previousPlatformNode = previousNode as PlatformNode;
-            var platformNode = node as PlatformNode;
+            var previousPlatformNode = PreviousNode as PlatformNode;
+            var platformNode = Node as PlatformNode;
             
             if (previousPlatformNode is null || platformNode is null) return false;
 
@@ -134,7 +164,7 @@ namespace Cables
                     return (a, b, t) => Vector2.Lerp(a.Position, b.Position, t);
                 case CurveFunctions.CurveFunction.Sine:
                     return (a, b, t) => CurveFunctions.SinLerp(a.Position, b.Position, t,
-                        NodeOrientation((PipeNode) previousNode).Inverse());
+                        NodeOrientation((PipeNode) PreviousNode).Inverse());
                 case CurveFunctions.CurveFunction.Catenary:
                     return (a, b, t) =>
                         CurveFunctions.CatenaryLerp(a.Position, b.Position, t, catenaryLength);
@@ -186,6 +216,13 @@ namespace Cables
         protected static OrientationUtil.Orientation NodeOrientation(PipeNode node)
         {
             return OrientationUtil.VectorToOrientation(node.Normal);
+        }
+
+        private void OnNodeMoved(CableNode _)
+        {
+            GeneratePoints();
+            
+            moved.Invoke(this);
         }
     }
 }
